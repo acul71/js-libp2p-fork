@@ -4,7 +4,6 @@ import { MAX_CONNECTIONS } from './constants.js'
 import type { IpNet } from '@chainsafe/netmask'
 import type { Libp2pEvents, Logger, ComponentLogger, TypedEventTarget, PeerStore, Connection } from '@libp2p/interface'
 import type { ConnectionManager } from '@libp2p/interface-internal'
-import type { Multiaddr } from '@multiformats/multiaddr'
 
 interface ConnectionPrunerInit {
   maxConnections?: number
