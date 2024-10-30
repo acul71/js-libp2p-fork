@@ -582,8 +582,8 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
     }
 
     // check allow list
-    const allowConnection = this.allow.some(ma => {
-      return ma.contains(maConn.remoteAddr.nodeAddress().address)
+    const allowConnection = this.allow.some(ipNet => {
+      return ipNet.contains(maConn.remoteAddr.nodeAddress().address)
     })
 
     if (allowConnection) {

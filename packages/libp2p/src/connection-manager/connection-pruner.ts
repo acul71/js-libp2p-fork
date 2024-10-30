@@ -107,8 +107,8 @@ export class ConnectionPruner {
     for (const connection of sortedConnections) {
       this.log('too many connections open - closing a connection to %p', connection.remotePeer)
       // check allow list
-      const connectionInAllowList = this.allow.some((ma) => {
-        return ma.contains(connection.remoteAddr.nodeAddress().address)
+      const connectionInAllowList = this.allow.some((ipNet) => {
+        return ipNet.contains(connection.remoteAddr.nodeAddress().address)
       })
 
       // Connections in the allow list should be excluded from pruning
