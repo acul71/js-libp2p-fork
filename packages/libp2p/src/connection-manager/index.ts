@@ -218,8 +218,25 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
     this.onDisconnect = this.onDisconnect.bind(this)
 
     // allow/deny lists
-    this.allow = (init.allow ?? []).map(ma => convertToIpNet(multiaddr(ma)))
-    this.deny = (init.deny ?? []).map(ma => convertToIpNet(multiaddr(ma)))
+    this.allow = (init.allow ?? []).map((a) => {
+      try {
+        // Try to parse a as a multiaddr directly
+        return convertToIpNet(multiaddr(a))
+      } catch (error) {
+        // If parsing fails, append '/ipcidr/32' and try again
+        return convertToIpNet(multiaddr(a + '/ipcidr/32'))
+      }
+    })
+
+    this.deny = (init.deny ?? []).map((a) => {
+      try {
+        // Try to parse a as a multiaddr directly
+        return convertToIpNet(multiaddr(a))
+      } catch (error) {
+        // If parsing fails, append '/ipcidr/32' and try again
+        return convertToIpNet(multiaddr(a + '/ipcidr/32'))
+      }
+    })
 
     this.incomingPendingConnections = 0
     this.maxIncomingPendingConnections = init.maxIncomingPendingConnections ?? defaultOptions.maxIncomingPendingConnections
