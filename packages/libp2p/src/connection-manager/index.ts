@@ -220,21 +220,33 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
     // allow/deny lists
     this.allow = (init.allow ?? []).map((a) => {
       try {
-        // Try to parse a as a multiaddr directly
-        return convertToIpNet(multiaddr(a))
+        // Attempt to parse `a` with the required /ipcidr/32 if missing
+        let ma
+        if (a.includes('/ipcidr')) {
+          ma = multiaddr(a) // Parse directly if it already includes /ipcidr
+        } else {
+          ma = multiaddr(a).encapsulate('/ipcidr/32') // Encapsulate with /ipcidr/32 if missing
+        }
+
+        return convertToIpNet(ma)
       } catch (error) {
-        // If parsing fails, append '/ipcidr/32' and try again
-        return convertToIpNet(multiaddr(a + '/ipcidr/32'))
+        throw new Error(`Invalid multiaddr format in allow list: ${a}`)
       }
     })
 
     this.deny = (init.deny ?? []).map((a) => {
       try {
-        // Try to parse a as a multiaddr directly
-        return convertToIpNet(multiaddr(a))
+        // Attempt to parse `a` with the required /ipcidr/32 if missing
+        let ma
+        if (a.includes('/ipcidr')) {
+          ma = multiaddr(a) // Parse directly if it already includes /ipcidr
+        } else {
+          ma = multiaddr(a).encapsulate('/ipcidr/32') // Encapsulate with /ipcidr/32 if missing
+        }
+
+        return convertToIpNet(ma)
       } catch (error) {
-        // If parsing fails, append '/ipcidr/32' and try again
-        return convertToIpNet(multiaddr(a + '/ipcidr/32'))
+        throw new Error(`Invalid multiaddr format in deny list: ${a}`)
       }
     })
 
