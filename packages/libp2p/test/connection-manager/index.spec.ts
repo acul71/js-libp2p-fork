@@ -33,6 +33,48 @@ describe('Connection Manager', () => {
     await stop(connectionManager, libp2p)
   })
 
+  it('should correctly parse and store allow and deny lists as IpNet objects in ConnectionManager', () => {
+    // Define common IPs and CIDRs for reuse
+    const ipAllowDeny = [
+      '/ip4/83.13.55.32', // Single IP address
+      '/ip4/83.13.55.32/ipcidr/32', // CIDR notation for a single IP
+      '/ip4/192.168.1.1/ipcidr/24' // CIDR notation for a network
+    ]
+
+    // Initialize mock input for the allow and deny lists
+    const mockInit = {
+      allow: [...ipAllowDeny],
+      deny: [...ipAllowDeny]
+    }
+
+    // Create an instance of the DefaultConnectionManager with the mock initialization
+    const connectionManager = new DefaultConnectionManager(components, mockInit)
+
+    // Define the expected IpNet objects that should result from parsing the allow and deny lists
+    const expectedIpNets = [
+      {
+        mask: new Uint8Array([255, 255, 255, 255]), // Netmask for a single IP address
+        network: new Uint8Array([83, 13, 55, 32]) // Network address for '83.13.55.32'
+      },
+      {
+        mask: new Uint8Array([255, 255, 255, 255]), // Netmask for a single IP address
+        network: new Uint8Array([83, 13, 55, 32]) // Network address for '83.13.55.32'
+      },
+      {
+        mask: new Uint8Array([255, 255, 255, 0]), // Netmask for a /24 CIDR block
+        network: new Uint8Array([192, 168, 1, 0]) // Network address for '192.168.1.0'
+      }
+    ]
+
+    // Test that the 'allow' list is correctly parsed and stored as IpNet objects
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    expect(connectionManager['allow']).to.deep.equal(expectedIpNets)
+
+    // Test that the 'deny' list is correctly parsed and stored as IpNet objects
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    expect(connectionManager['deny']).to.deep.equal(expectedIpNets)
+  })
+
   it('should fail if the connection manager has mismatched connection limit options', async () => {
     await expect(
       createLibp2p({
