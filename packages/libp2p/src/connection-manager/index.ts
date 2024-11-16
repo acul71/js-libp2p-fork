@@ -1,9 +1,9 @@
 import { type IpNet } from '@chainsafe/netmask'
 import { ConnectionClosedError, InvalidMultiaddrError, InvalidParametersError, InvalidPeerIdError, NotStartedError, start, stop } from '@libp2p/interface'
 import { PeerMap } from '@libp2p/peer-collections'
+import { multiaddrToIpNet } from '@libp2p/utils/multiaddrToIpNet'
 import { RateLimiter } from '@libp2p/utils/rate-limiter'
 import { type Multiaddr, type Resolver, multiaddr } from '@multiformats/multiaddr'
-import { convertToIpNet } from '@multiformats/multiaddr/convert'
 import { dnsaddrResolver } from '@multiformats/multiaddr/resolvers'
 import { CustomProgressEvent } from 'progress-events'
 import { getPeerAddress } from '../get-peer.js'
@@ -218,37 +218,8 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
     this.onDisconnect = this.onDisconnect.bind(this)
 
     // allow/deny lists
-    this.allow = (init.allow ?? []).map((a) => {
-      try {
-        // Attempt to parse `a` with the required /ipcidr/32 if missing
-        let ma
-        if (a.includes('/ipcidr')) {
-          ma = multiaddr(a) // Parse directly if it already includes /ipcidr
-        } else {
-          ma = multiaddr(a).encapsulate('/ipcidr/32') // Encapsulate with /ipcidr/32 if missing
-        }
-
-        return convertToIpNet(ma)
-      } catch (error) {
-        throw new Error(`Invalid multiaddr format in allow list: ${a}`)
-      }
-    })
-
-    this.deny = (init.deny ?? []).map((a) => {
-      try {
-        // Attempt to parse `a` with the required /ipcidr/32 if missing
-        let ma
-        if (a.includes('/ipcidr')) {
-          ma = multiaddr(a) // Parse directly if it already includes /ipcidr
-        } else {
-          ma = multiaddr(a).encapsulate('/ipcidr/32') // Encapsulate with /ipcidr/32 if missing
-        }
-
-        return convertToIpNet(ma)
-      } catch (error) {
-        throw new Error(`Invalid multiaddr format in deny list: ${a}`)
-      }
-    })
+    this.allow = init.allow != null ? this.parseIpNetList(init.allow) : []
+    this.deny = init.deny != null ? this.parseIpNetList(init.deny) : []
 
     this.incomingPendingConnections = 0
     this.maxIncomingPendingConnections = init.maxIncomingPendingConnections ?? defaultOptions.maxIncomingPendingConnections
@@ -268,7 +239,7 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
       logger: components.logger
     }, {
       maxConnections: this.maxConnections,
-      allow: this.allow
+      allow: init.allow != null ? init.allow.map(a => multiaddr(a)) : undefined
     })
 
     this.dialQueue = new DialQueue(components, {
@@ -294,6 +265,16 @@ export class DefaultConnectionManager implements ConnectionManager, Startable {
       backoffFactor: init.reconnectBackoffFactor,
       maxParallelReconnects: init.maxParallelReconnects
     })
+  }
+
+  /**
+   * Converts a list of string representations of multiaddresses into an array of IpNet objects.
+   *
+   * @param list - An array of strings, each representing a multiaddress.
+   * @returns An array of IpNet objects parsed from the given multiaddress strings.
+   */
+  private parseIpNetList (list: string[]): IpNet[] {
+    return list.map(a => multiaddrToIpNet(a))
   }
 
   readonly [Symbol.toStringTag] = '@libp2p/connection-manager'
