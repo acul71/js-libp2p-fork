@@ -131,6 +131,10 @@
     "./tracked-map": {
       "types": "./dist/src/tracked-map.d.ts",
       "import": "./dist/src/tracked-map.js"
+    },
+    "./multiaddrToIpNet": {
+      "types": "./dist/src/multiaddrToIpNet.d.ts",
+      "import": "./dist/src/multiaddrToIpNet.js"
     }
   },
   "eslintConfig": {
@@ -155,6 +159,7 @@
     "test:electron-main": "aegir test -t electron-main"
   },
   "dependencies": {
+    "@chainsafe/netmask": "^2.0.0",
     "@chainsafe/is-ip": "^2.0.2",
     "@libp2p/crypto": "^5.0.6",
     "@libp2p/interface": "^2.2.0",
