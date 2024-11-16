@@ -1,13 +1,15 @@
 import { PeerMap } from '@libp2p/peer-collections'
 import { safelyCloseConnectionIfUnused } from '@libp2p/utils/close'
+import { multiaddrToIpNet } from '@libp2p/utils/multiaddrToIpNet'
 import { MAX_CONNECTIONS } from './constants.js'
 import type { IpNet } from '@chainsafe/netmask'
 import type { Libp2pEvents, Logger, ComponentLogger, TypedEventTarget, PeerStore, Connection } from '@libp2p/interface'
 import type { ConnectionManager } from '@libp2p/interface-internal'
+import type { Multiaddr } from '@multiformats/multiaddr'
 
 interface ConnectionPrunerInit {
   maxConnections?: number
-  allow?: IpNet[]
+  allow?: Multiaddr[]
 }
 
 interface ConnectionPrunerComponents {
@@ -35,7 +37,7 @@ export class ConnectionPruner {
 
   constructor (components: ConnectionPrunerComponents, init: ConnectionPrunerInit = {}) {
     this.maxConnections = init.maxConnections ?? defaultOptions.maxConnections
-    this.allow = init.allow ?? defaultOptions.allow
+    this.allow = (init.allow ?? []).map(ma => multiaddrToIpNet(ma))
     this.connectionManager = components.connectionManager
     this.peerStore = components.peerStore
     this.events = components.events
